@@ -1,0 +1,68 @@
+---
+# Set appropriate Drupal permissions
+
+# Initialisation
+
+- name: Setting vhost directory
+  set_fact: path="{{ ansistrano_release_path.stdout }}{{ drupal_rel_path }}"
+
+- name: Checking Drupal installation - {{ path }}/core/core.api.php
+  stat: path="{{ path }}/core/core.api.php"
+  register: vhost_stat
+
+- name: Drupal installation is ok
+  fail: msg="Drupal installation on {{ path }} not detected."
+  when: not vhost_stat.stat.exists
+
+- name: Checking directory permissions
+  file: path="{{ path }}/ansible-check-perms" state=touch
+
+- name: Directory permissions ok
+  file: path="{{ path }}/ansible-check-perms" state=absent
+
+- name: Checking apache user
+  set_fact: apache_user={{ apache_user }}
+  when: apache_user is not defined
+
+- name: Checking apache group
+  set_fact: apache_group={{ apache_group }}
+  when: apache_group is not defined
+
+# Permissions
+
+- name: Setting ownership | {{ path }} apache group {{ apache_user }}:{{ apache_group }}
+  file: path="{{ path }}" owner="{{ apache_user }}" group="{{ apache_group }}" recurse=yes
+  # Only if sudoer is necessary.
+  # become: true
+
+- name: Setting permissions on all directories in root to 750
+  command: find "{{ path }}" -type d -exec chmod u=rwx,g=rx,o= {} \;
+
+- name: Setting permissions on all files in root to 640
+  command: find "{{ path }}" -type f -exec chmod u=rw,g=r,o= {} \;
+
+#- name: Setting permissions on tmp directory to 770
+#  command: find "{{ path }}/tmp" -exec chmod ug=rwx,o= {} \;
+
+# "Shared" files
+- name: Setting ownership | {{ path }} apache group {{ apache_user }}:{{ apache_group }}
+  file: path="{{ ansistrano_shared_path }}/{{ item }}" owner="{{ apache_user }}" group="{{ apache_group }}"
+  with_items: "{{ ansistrano_shared_files }}"
+
+- name: Setting permissions on [files] directories in sites to 640
+  command: find "{{ ansistrano_shared_path }}/{{ item }}" -type f -exec chmod u=rw,g=r,o= {} \;
+  with_items: "{{ ansistrano_shared_files }}"
+
+# "Shared" directories
+- name: Setting ownership | {{ path }} apache group {{ apache_user }}:{{ apache_group }}
+  file: path="{{ ansistrano_shared_path }}/{{ item }}" owner="{{ apache_user }}" group="{{ apache_group }}" recurse=yes
+  with_items: "{{ ansistrano_shared_paths }}"
+
+- name: Setting permissions on [shared] directories in sites to 770
+  command: find "{{ ansistrano_shared_path }}/{{ item }}" -type d -exec chmod ug=rwx,o= '{}' \;
+  with_items: "{{ ansistrano_shared_paths }}"
+
+- name: Setting permissions on [shared] directories files in sites to 660
+  #shell: find "{{ path }}/sites"  -name files -type d -exec find '{}' -type f \; | while read FILE; do chmod ug=rw,o= "$FILE"; done
+  command: find "{{ ansistrano_shared_path }}/{{ item }}" -type f -exec chmod ug=rw,o= '{}' \;
+  with_items: "{{ ansistrano_shared_paths }}"

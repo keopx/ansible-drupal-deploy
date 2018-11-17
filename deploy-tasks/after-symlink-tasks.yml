@@ -1,0 +1,18 @@
+---
+
+- name: 'Run composer'
+  shell: "composer install --no-dev --optimize-autoloader"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+  run_once: true
+
+## Not supporte remote user key.
+#- name: 'Create tag'
+#  shell: 'git tag `date "+{{ ansistrano_git_branch }}-%Y%m%d-%H%M%S"`; git push --tags'
+#  args:
+#    chdir: "{{ ansistrano_deploy_to }}/repo"
+#  run_once: true
+
+- include: ../tasks/drupal-fix-permissions.yml
+
+- include: ../tasks/drupal-update.yml

@@ -1,0 +1,34 @@
+---
+- name: Deploy Drupal project using Ansistrano.
+  hosts: all
+  remote_user: user # Usuario con el que intentará conectarse por ssh a los hosts
+  vars:
+    ansistrano_deploy_from: "{{ playbook_dir }}/../" # Ruta local al proyecto (relativo or absoluto)
+    ansistrano_deploy_to: "/var/www/keopx" # Ruta de despliegue en el servidor
+    # ansistrano_deploy_to: "~/" # Ruta de despliegue en el servidor
+    ansistrano_version_dir: "releases" # Releases folder name
+    ansistrano_current_dir: "current" # Softlink name. You should rarely changed it.
+    ansistrano_shared_paths:
+      - 'web/sites/default/files'
+      - 'web/sites/default/private'
+    ansistrano_shared_files:
+      - 'web/sites/default/settings.local.php'
+    ansistrano_keep_releases: 3 # Número de releases que queremos que mantenga
+    # Variables used in the Git deployment strategy
+    ansistrano_deploy_via: git
+    ansistrano_git_repo: git@bitbucket.org:keopx/keopx.git # Location of the git repository
+    ansistrano_git_branch: master # What version of the repository to check out. This can be the full 40-character SHA-1 hash, the literal string HEAD, a branch name, or a tag name
+    ansistrano_git_identity_key_path: "~/.ssh/id_rsa"
+    # Send some information to ansistrano deploy
+    ansistrano_allow_anonymous_stats: false
+
+    # Hooks: custom tasks if you need the
+    ansistrano_before_update_code_tasks_file: "{{ playbook_dir }}/deploy-tasks/before-update-code-tasks.yml"
+    ansistrano_after_symlink_tasks_file: "{{ playbook_dir }}/deploy-tasks/after-symlink-tasks.yml"
+    ansistrano_after_cleanup_tasks_file: "{{ playbook_dir }}/deploy-tasks/after-cleanup-tasks.yml"
+    drupal_rel_path: '/web'
+    apache_user: 'deploy'
+    apache_group: 'www-data' # Not necessary if same as apache_user.
+    drush_args : ''
+  roles:
+    - { role: ansistrano.deploy }

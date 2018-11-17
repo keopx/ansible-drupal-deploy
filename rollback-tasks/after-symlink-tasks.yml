@@ -1,0 +1,24 @@
+---
+
+- name: 'Run composer'
+  shell: "composer install --no-dev --optimize-autoloader"
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}"
+  run_once: true
+
+- name: 'Restore database using drush'
+  shell: 'gunzip -c ../database-*.sql.gz | drush sqlc'
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}{{ drupal_rel_path }}"
+  run_once: true
+
+- name: 'drush cr'
+  shell: 'drush cr {{ drush_args }}'
+  args:
+    chdir: "{{ ansistrano_release_path.stdout }}{{ drupal_rel_path }}"
+  run_once: true
+#
+#- name: 'varnish clean domain all'
+#  shell: 'curl -X BAN "http://{{ item }}/.*" -H "Host: {{ varnish_domain }}" --fail -s  -o /dev/null'
+#  with_items: "{{ varnish_servers }}"
+#  run_once: true

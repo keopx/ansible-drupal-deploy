@@ -1,0 +1,7 @@
+---
+
+- name: 'drush sql-dump'
+  shell: 'drush sql-dump --gzip --result-file=../database-$(date +%Y-%m-%d-%H.%M.%S).sql'
+  args:
+    chdir: "{{ ansistrano_deploy_to }}/{{ ansistrano_current_dir }}/{{ drupal_rel_path }}"
+  run_once: true

@@ -1,0 +1,12 @@
+---
+- name: Rollback example.
+  hosts: all
+  remote_user: user # Usuario con el que intentará conectarse por ssh a los hosts
+  vars:
+    ansistrano_deploy_to: "/var/www/keopx" # Ruta de despliegue en el servidor
+    ansistrano_after_symlink_tasks_file: "{{ playbook_dir }}/rollback-tasks/after-symlink-tasks.yml"
+    ansistrano_after_cleanup_tasks_file: "{{ playbook_dir }}/tasks/after-cleanup-tasks.yml"
+    drupal_rel_path : '/web'
+    drush_args : ''
+  roles:
+    - { role: ansistrano.rollback }
